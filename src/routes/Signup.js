@@ -2,8 +2,9 @@ import gql from 'graphql-tag';
 import React from 'react';
 import { Mutation } from 'react-apollo';
 import {
-  Button, StyleSheet, TextInput, View,
+  AsyncStorage, Button, Text, View,
 } from 'react-native';
+import TextField from '../components/TextField';
 
 const signUpMutation = gql`
   mutation SignUp($email: String!, $password: String!, $name: String!) {
@@ -13,25 +14,18 @@ const signUpMutation = gql`
   }
 `;
 
-const styles = StyleSheet.create({
-  field: {
-    borderBottomWidth: 1,
-    fontSize: 20,
-    marginBottom: 15,
-    height: 35,
+const defaultState = {
+  values: {
+    name: '',
+    email: '',
+    password: '',
   },
-});
+  errors: {},
+  isSubmitting: false,
+};
 
 export default class Signup extends React.Component {
-  state = {
-    values: {
-      name: '',
-      email: '',
-      password: '',
-    },
-    // errors: {},
-    isSubmitting: false,
-  };
+  state = defaultState;
 
   onChangeText = (key, value) => {
     this.setState(state => ({
@@ -42,12 +36,42 @@ export default class Signup extends React.Component {
     }));
   };
 
+  onSubmit = async (mutate) => {
+    const { isSubmitting, values } = this.state;
+    const { history } = this.props;
+    if (isSubmitting) {
+      return;
+    }
+    this.setState({ isSubmitting: true });
+    let response;
+    try {
+      response = await mutate({
+        variables: values,
+      });
+    } catch (e) {
+      this.setState({
+        errors: {
+          email: 'Email already taken',
+        },
+        isSubmitting: false,
+      });
+      return;
+    }
+    await AsyncStorage.setItem('@ecommerce/token', response.data.signup.token);
+    this.setState(defaultState);
+    history.push('/products');
+  };
+
+  goToLoginPage = () => {
+    const { history } = this.props;
+    history.push('/login');
+  };
+
   render() {
     const {
       values: { name, email, password },
-      isSubmitting,
+      errors,
     } = this.state;
-    const { values } = this.state;
     return (
       <Mutation mutation={signUpMutation}>
         {mutate => (
@@ -60,39 +84,18 @@ export default class Signup extends React.Component {
             }}
           >
             <View style={{ width: 200 }}>
-              <TextInput
-                value={name}
-                onChangeText={text => this.onChangeText('name', text)}
-                placeholder="name"
-                style={styles.field}
-              />
-              <TextInput
-                value={email}
-                onChangeText={text => this.onChangeText('email', text)}
-                placeholder="email"
-                style={styles.field}
-              />
-              <TextInput
+              <TextField value={name} name="name" onChangeText={this.onChangeText} />
+              <TextField value={email} name="email" onChangeText={this.onChangeText} />
+              {errors.email && <Text style={{ color: 'red' }}>{errors.email}</Text>}
+              <TextField
                 value={password}
-                onChangeText={text => this.onChangeText('password', text)}
-                placeholder="password"
-                style={styles.field}
+                name="password"
                 secureTextEntry
+                onChangeText={this.onChangeText}
               />
-              <Button
-                title="Create Account"
-                onPress={async (e) => {
-                  e.preventDefault();
-                  if (isSubmitting) {
-                    return;
-                  }
-                  this.setState({ isSubmitting: true });
-                  await mutate({
-                    variables: values,
-                  });
-                  this.setState({ isSubmitting: false });
-                }}
-              />
+              <Button title="Create Account" onPress={() => this.onSubmit(mutate)} />
+              <Text style={{ textAlign: 'center' }}>or</Text>
+              <Button title="Login" onPress={this.goToLoginPage} />
             </View>
           </View>
         )}
