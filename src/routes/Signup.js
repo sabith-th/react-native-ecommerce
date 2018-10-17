@@ -58,13 +58,12 @@ export default class Signup extends React.Component {
       return;
     }
     await AsyncStorage.setItem('@ecommerce/token', response.data.signup.token);
-    this.setState(defaultState);
     history.push('/products');
   };
 
   goToLoginPage = () => {
     const { history } = this.props;
-    history.push('/login');
+    history.push('/');
   };
 
   render() {
