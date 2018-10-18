@@ -1,20 +1,9 @@
 import React from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Button, Text, View } from 'react-native';
 
-export default class Products extends React.Component {
-  state = {
-    items: ['Car', 'Bus'],
-  };
-
-  render() {
-    const { items } = this.state;
-    return (
-      <View style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-        <View>
-          <TextInput placeholder="name" />
-          <Text>{`Products: ${items[0].toString()}`}</Text>
-        </View>
-      </View>
-    );
-  }
-}
+export default ({ history }) => (
+  <View>
+    <Text style={{ marginLeft: 50, marginTop: 50 }}>Products</Text>
+    <Button title="Create new product" onPress={() => history.push('/new-product')} />
+  </View>
+);

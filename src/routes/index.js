@@ -2,6 +2,7 @@ import React from 'react';
 import { NativeRouter, Route, Switch } from 'react-router-native';
 import Home from './CheckToken';
 import Login from './Login';
+import NewProduct from './NewProduct';
 import Products from './Products';
 import Signup from './Signup';
 
@@ -12,6 +13,7 @@ export default () => (
       <Route exact path="/login" component={Login} />
       <Route exact path="/signup" component={Signup} />
       <Route exact path="/products" component={Products} />
+      <Route exact path="/new-product" component={NewProduct} />
     </Switch>
   </NativeRouter>
 );
