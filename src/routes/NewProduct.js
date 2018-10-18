@@ -1,14 +1,24 @@
+import { ReactNativeFile } from 'apollo-upload-client';
 import { ImagePicker } from 'expo';
+import gql from 'graphql-tag';
 import React from 'react';
+import { Mutation } from 'react-apollo';
 import { Button, Image, View } from 'react-native';
 import TextField from '../components/TextField';
+
+const createProductMutation = gql`
+  mutation CreateProduct($name: String!, $price: Float!, $picture: Upload!) {
+    createProduct(name: $name, price: $price, picture: $picture) {
+      id
+    }
+  }
+`;
 
 const defaultState = {
   values: {
     name: '',
     price: '',
     pictureUrl: '',
-    seller: '',
   },
   errors: {},
   isSubmitting: false,
@@ -27,18 +37,33 @@ export default class NewProduct extends React.Component {
   };
 
   onSubmit = async (mutate) => {
-    const { isSubmitting, values } = this.state;
+    const {
+      isSubmitting,
+      values: { pictureUrl, name, price },
+    } = this.state;
     const { history } = this.props;
+    const picture = new ReactNativeFile({
+      uri: pictureUrl,
+      name: 'a.jpg',
+      type: 'image/jpeg',
+    });
+
     if (isSubmitting) {
       return;
     }
+
     this.setState({ isSubmitting: true });
     let response;
     try {
       response = await mutate({
-        variables: values,
+        variables: {
+          name,
+          price: parseFloat(price),
+          picture,
+        },
       });
     } catch (e) {
+      console.log(e);
       // this.setState({
       //   errors: {
       //     email: 'Email already taken',
@@ -64,34 +89,31 @@ export default class NewProduct extends React.Component {
 
   render() {
     const {
-      values: {
-        name, price, pictureUrl, seller,
-      },
+      values: { name, price, pictureUrl },
     } = this.state;
     return (
-      <View
-        style={{
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <View style={{ width: 200 }}>
-          <TextField value={name} name="name" onChangeText={this.onChangeText} />
-          <TextField value={price} name="price" onChangeText={this.onChangeText} />
-          <TextField value={seller} name="seller" onChangeText={this.onChangeText} />
-
-          <Button title="Pick an image from camera roll" onPress={this.pickImage} />
-          {pictureUrl && <Image source={{ uri: pictureUrl }} style={{ width: 200, height: 200 }} />}
-          <Button
-            title="Create Product"
-            onPress={() => {
-              console.log('hello there');
+      <Mutation mutation={createProductMutation}>
+        {mutate => (
+          <View
+            style={{
+              flex: 1,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
             }}
-          />
-        </View>
-      </View>
+          >
+            <View style={{ width: 200 }}>
+              <TextField value={name} name="name" onChangeText={this.onChangeText} />
+              <TextField value={price} name="price" onChangeText={this.onChangeText} />
+              <Button title="Pick an image from camera roll" onPress={this.pickImage} />
+              {pictureUrl && (
+                <Image source={{ uri: pictureUrl }} style={{ width: 200, height: 200 }} />
+              )}
+              <Button title="Create Product" onPress={() => this.onSubmit(mutate)} />
+            </View>
+          </View>
+        )}
+      </Mutation>
     );
   }
 }
