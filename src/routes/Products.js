@@ -1,9 +1,9 @@
 import React from 'react';
-import { TextInput, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 
 export default class Products extends React.Component {
   state = {
-    items: [{ 1: 'Car' }],
+    items: ['Car', 'Bus'],
   };
 
   render() {
@@ -12,7 +12,7 @@ export default class Products extends React.Component {
       <View style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
         <View>
           <TextInput placeholder="name" />
-          {items[0].toString()}
+          <Text>{`Products: ${items[0].toString()}`}</Text>
         </View>
       </View>
     );

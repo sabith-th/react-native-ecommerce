@@ -5,6 +5,7 @@ import {
   AsyncStorage, Button, Text, View,
 } from 'react-native';
 import TextField from '../components/TextField';
+import { TOKEN_KEY } from '../constants';
 
 const loginMutation = gql`
   mutation Login($email: String!, $password: String!) {
@@ -53,7 +54,7 @@ export default class Login extends React.Component {
     });
     const { payload, error } = response.data.login;
     if (payload) {
-      await AsyncStorage.setItem('@ecommerce/token', payload.token);
+      await AsyncStorage.setItem(TOKEN_KEY, payload.token);
       history.push('/products');
     } else {
       this.setState({

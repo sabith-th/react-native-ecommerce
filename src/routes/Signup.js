@@ -5,6 +5,7 @@ import {
   AsyncStorage, Button, Text, View,
 } from 'react-native';
 import TextField from '../components/TextField';
+import { TOKEN_KEY } from '../constants';
 
 const signUpMutation = gql`
   mutation SignUp($email: String!, $password: String!, $name: String!) {
@@ -57,13 +58,13 @@ export default class Signup extends React.Component {
       });
       return;
     }
-    await AsyncStorage.setItem('@ecommerce/token', response.data.signup.token);
+    await AsyncStorage.setItem(TOKEN_KEY, response.data.signup.token);
     history.push('/products');
   };
 
   goToLoginPage = () => {
     const { history } = this.props;
-    history.push('/');
+    history.push('/login');
   };
 
   render() {
