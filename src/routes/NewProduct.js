@@ -53,9 +53,8 @@ export default class NewProduct extends React.Component {
     }
 
     this.setState({ isSubmitting: true });
-    let response;
     try {
-      response = await mutate({
+      await mutate({
         variables: {
           name,
           price: parseFloat(price),
@@ -63,16 +62,9 @@ export default class NewProduct extends React.Component {
         },
       });
     } catch (e) {
+      // eslint-disable-next-line
       console.log(e);
-      // this.setState({
-      //   errors: {
-      //     email: 'Email already taken',
-      //   },
-      //   isSubmitting: false,
-      // });
-      // return;
     }
-    console.log(response);
     history.push('/products');
   };
 

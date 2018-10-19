@@ -19,8 +19,8 @@ const styles = StyleSheet.create({
 });
 
 const refreshTokenMutation = gql`
-  mutation RefreshToken($token: String!) {
-    refreshToken(token: $token)
+  mutation RefreshToken {
+    refreshToken
   }
 `;
 
@@ -34,7 +34,7 @@ class CheckToken extends React.Component {
     }
     let response;
     try {
-      response = await checkToken({ variables: { token } });
+      response = await checkToken();
     } catch (e) {
       history.push('/signup');
       return;
