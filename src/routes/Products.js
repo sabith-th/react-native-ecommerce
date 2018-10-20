@@ -4,6 +4,7 @@ import { Query } from 'react-apollo';
 import {
   Button, FlatList, Image, StyleSheet, Text, View,
 } from 'react-native';
+import { connect } from 'react-redux';
 
 const styles = StyleSheet.create({
   container: {
@@ -33,6 +34,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontStyle: 'italic',
   },
+  editSection: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
 });
 
 export const productsQuery = gql`
@@ -42,11 +47,14 @@ export const productsQuery = gql`
       name
       price
       pictureUrl
+      seller {
+        id
+      }
     }
   }
 `;
 
-export default ({ history }) => (
+const Products = ({ userId, history }) => (
   <Query query={productsQuery}>
     {({ loading, error, data: { products } }) => {
       if (loading) return 'Loading...';
@@ -66,6 +74,12 @@ export default ({ history }) => (
                 <View style={styles.right}>
                   <Text style={styles.name}>{item.name}</Text>
                   <Text style={styles.price}>{`$${item.price}`}</Text>
+                  {userId === item.seller.id && (
+                    <View style={styles.editSection}>
+                      <Button title="Edit" onPress={() => {}} />
+                      <Button title="Delete" onPress={() => {}} />
+                    </View>
+                  )}
                 </View>
               </View>
             )}
@@ -75,3 +89,5 @@ export default ({ history }) => (
     }}
   </Query>
 );
+
+export default connect(state => ({ userId: state.user.userId }))(Products);
