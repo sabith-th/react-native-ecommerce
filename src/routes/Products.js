@@ -1,10 +1,11 @@
 import gql from 'graphql-tag';
+import jwtDecode from 'jwt-decode';
 import React from 'react';
 import { Query } from 'react-apollo';
 import {
   AsyncStorage, Button, FlatList, Image, StyleSheet, Text, View,
 } from 'react-native';
-import { USER_ID } from '../constants';
+import { TOKEN_KEY } from '../constants';
 
 const styles = StyleSheet.create({
   container: {
@@ -60,8 +61,10 @@ export default class Products extends React.Component {
   };
 
   componentDidMount = async () => {
+    const token = await AsyncStorage.getItem(TOKEN_KEY);
+    const { userId } = jwtDecode(token);
     this.setState({
-      userId: await AsyncStorage.getItem(USER_ID),
+      userId,
     });
   };
 

@@ -4,7 +4,7 @@ import { Mutation } from 'react-apollo';
 import {
   ActivityIndicator, AsyncStorage, StyleSheet, View,
 } from 'react-native';
-import { TOKEN_KEY, USER_ID } from '../constants';
+import { TOKEN_KEY } from '../constants';
 
 const styles = StyleSheet.create({
   container: {
@@ -43,12 +43,9 @@ class CheckToken extends React.Component {
       return;
     }
     const {
-      refreshToken: { token: newToken, userId },
+      refreshToken: { token: newToken },
     } = response.data;
-    await Promise.all([
-      AsyncStorage.setItem(TOKEN_KEY, newToken),
-      AsyncStorage.setItem(USER_ID, userId),
-    ]);
+    await AsyncStorage.setItem(TOKEN_KEY, newToken);
     history.push('/products');
   };
 
