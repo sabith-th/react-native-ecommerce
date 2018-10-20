@@ -91,7 +91,10 @@ export default class Products extends React.Component {
                   <Button title="Create new product" onPress={() => history.push('/new-product')} />
                   <FlatList
                     keyExtractor={item => item.id}
-                    data={products}
+                    data={products.map(p => ({
+                      ...p,
+                      showButtons: userId === p.seller.id,
+                    }))}
                     renderItem={({ item }) => (
                       <View style={styles.row}>
                         <Image
@@ -101,7 +104,7 @@ export default class Products extends React.Component {
                         <View style={styles.right}>
                           <Text style={styles.name}>{item.name}</Text>
                           <Text style={styles.price}>{`$${item.price}`}</Text>
-                          {userId === item.seller.id && (
+                          {item.showButtons && (
                             <View style={styles.editSection}>
                               <Button title="Edit" onPress={() => {}} />
                               <Button
