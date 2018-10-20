@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const productsQuery = gql`
+export const productsQuery = gql`
   query {
     products {
       id
@@ -53,8 +53,10 @@ export default ({ history }) => (
       if (error) return `Error! ${error.message}`;
       return (
         <View style={styles.container}>
+          <Button title="Create new product" onPress={() => history.push('/new-product')} />
           <FlatList
-            data={products.map(p => ({ ...p, key: p.id }))}
+            keyExtractor={item => item.id}
+            data={products}
             renderItem={({ item }) => (
               <View style={styles.row}>
                 <Image
@@ -68,7 +70,6 @@ export default ({ history }) => (
               </View>
             )}
           />
-          <Button title="Create new product" onPress={() => history.push('/new-product')} />
         </View>
       );
     }}

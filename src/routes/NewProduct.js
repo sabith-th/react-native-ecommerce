@@ -5,11 +5,15 @@ import React from 'react';
 import { Mutation } from 'react-apollo';
 import { Button, Image, View } from 'react-native';
 import TextField from '../components/TextField';
+import { productsQuery } from './Products';
 
 const createProductMutation = gql`
   mutation CreateProduct($name: String!, $price: Float!, $picture: Upload!) {
     createProduct(name: $name, price: $price, picture: $picture) {
       id
+      name
+      price
+      pictureUrl
     }
   }
 `;
@@ -59,6 +63,11 @@ export default class NewProduct extends React.Component {
           name,
           price: parseFloat(price),
           picture,
+        },
+        update: (store, { data: { createProduct } }) => {
+          const data = store.readQuery({ query: productsQuery });
+          data.products.push(createProduct);
+          store.writeQuery({ query: productsQuery, data });
         },
       });
     } catch (e) {
