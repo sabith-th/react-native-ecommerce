@@ -2,9 +2,9 @@ import gql from 'graphql-tag';
 import React from 'react';
 import { Query } from 'react-apollo';
 import {
-  Button, FlatList, Image, StyleSheet, Text, View,
+  AsyncStorage, Button, FlatList, Image, StyleSheet, Text, View,
 } from 'react-native';
-import { connect } from 'react-redux';
+import { USER_ID } from '../constants';
 
 const styles = StyleSheet.create({
   container: {
@@ -54,40 +54,54 @@ export const productsQuery = gql`
   }
 `;
 
-const Products = ({ userId, history }) => (
-  <Query query={productsQuery}>
-    {({ loading, error, data: { products } }) => {
-      if (loading) return 'Loading...';
-      if (error) return `Error! ${error.message}`;
-      return (
-        <View style={styles.container}>
-          <Button title="Create new product" onPress={() => history.push('/new-product')} />
-          <FlatList
-            keyExtractor={item => item.id}
-            data={products}
-            renderItem={({ item }) => (
-              <View style={styles.row}>
-                <Image
-                  style={styles.images}
-                  source={{ uri: `http://localhost:4000/${item.pictureUrl}` }}
-                />
-                <View style={styles.right}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <Text style={styles.price}>{`$${item.price}`}</Text>
-                  {userId === item.seller.id && (
-                    <View style={styles.editSection}>
-                      <Button title="Edit" onPress={() => {}} />
-                      <Button title="Delete" onPress={() => {}} />
-                    </View>
-                  )}
-                </View>
-              </View>
-            )}
-          />
-        </View>
-      );
-    }}
-  </Query>
-);
+export default class Products extends React.Component {
+  state = {
+    userId: null,
+  };
 
-export default connect(state => ({ userId: state.user.userId }))(Products);
+  componentDidMount = async () => {
+    this.setState({
+      userId: await AsyncStorage.getItem(USER_ID),
+    });
+  };
+
+  render() {
+    const { history } = this.props;
+    const { userId } = this.state;
+    return (
+      <Query query={productsQuery}>
+        {({ loading, error, data: { products } }) => {
+          if (loading) return 'Loading...';
+          if (error) return `Error! ${error.message}`;
+          return (
+            <View style={styles.container}>
+              <Button title="Create new product" onPress={() => history.push('/new-product')} />
+              <FlatList
+                keyExtractor={item => item.id}
+                data={products}
+                renderItem={({ item }) => (
+                  <View style={styles.row}>
+                    <Image
+                      style={styles.images}
+                      source={{ uri: `http://localhost:4000/${item.pictureUrl}` }}
+                    />
+                    <View style={styles.right}>
+                      <Text style={styles.name}>{item.name}</Text>
+                      <Text style={styles.price}>{`$${item.price}`}</Text>
+                      {userId === item.seller.id && (
+                        <View style={styles.editSection}>
+                          <Button title="Edit" onPress={() => {}} />
+                          <Button title="Delete" onPress={() => {}} />
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
+              />
+            </View>
+          );
+        }}
+      </Query>
+    );
+  }
+}

@@ -5,10 +5,8 @@ import { createUploadLink } from 'apollo-upload-client';
 import React from 'react';
 import { ApolloProvider } from 'react-apollo';
 import { AsyncStorage } from 'react-native';
-import { Provider } from 'react-redux';
 import { TOKEN_KEY } from './constants';
 import Routes from './routes';
-import store from './store';
 
 const authLink = setContext(async (_, { headers }) => {
   const token = await AsyncStorage.getItem(TOKEN_KEY);
@@ -26,9 +24,7 @@ const client = new ApolloClient({
 });
 
 export default () => (
-  <Provider store={store}>
-    <ApolloProvider client={client}>
-      <Routes />
-    </ApolloProvider>
-  </Provider>
+  <ApolloProvider client={client}>
+    <Routes />
+  </ApolloProvider>
 );
