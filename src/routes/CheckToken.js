@@ -22,7 +22,6 @@ const refreshTokenMutation = gql`
   mutation RefreshToken {
     refreshToken {
       token
-      userId
     }
   }
 `;

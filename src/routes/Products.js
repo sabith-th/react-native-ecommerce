@@ -1,7 +1,7 @@
 import gql from 'graphql-tag';
 import jwtDecode from 'jwt-decode';
 import React from 'react';
-import { Query } from 'react-apollo';
+import { Mutation, Query } from 'react-apollo';
 import {
   AsyncStorage, Button, FlatList, Image, StyleSheet, Text, View,
 } from 'react-native';
@@ -55,6 +55,14 @@ export const productsQuery = gql`
   }
 `;
 
+export const deleteProductMutation = gql`
+  mutation DeleteProduct($id: ID!) {
+    deleteProduct(where: { id: $id }) {
+      id
+    }
+  }
+`;
+
 export default class Products extends React.Component {
   state = {
     userId: null,
@@ -72,39 +80,55 @@ export default class Products extends React.Component {
     const { history } = this.props;
     const { userId } = this.state;
     return (
-      <Query query={productsQuery}>
-        {({ loading, error, data: { products } }) => {
-          if (loading) return 'Loading...';
-          if (error) return `Error! ${error.message}`;
-          return (
-            <View style={styles.container}>
-              <Button title="Create new product" onPress={() => history.push('/new-product')} />
-              <FlatList
-                keyExtractor={item => item.id}
-                data={products}
-                renderItem={({ item }) => (
-                  <View style={styles.row}>
-                    <Image
-                      style={styles.images}
-                      source={{ uri: `http://localhost:4000/${item.pictureUrl}` }}
-                    />
-                    <View style={styles.right}>
-                      <Text style={styles.name}>{item.name}</Text>
-                      <Text style={styles.price}>{`$${item.price}`}</Text>
-                      {userId === item.seller.id && (
-                        <View style={styles.editSection}>
-                          <Button title="Edit" onPress={() => {}} />
-                          <Button title="Delete" onPress={() => {}} />
+      <Mutation mutation={deleteProductMutation}>
+        {deleteProduct => (
+          <Query query={productsQuery}>
+            {({ loading, error, data: { products } }) => {
+              if (loading) return 'Loading...';
+              if (error) return `Error! ${error.message}`;
+              return (
+                <View style={styles.container}>
+                  <Button title="Create new product" onPress={() => history.push('/new-product')} />
+                  <FlatList
+                    keyExtractor={item => item.id}
+                    data={products}
+                    renderItem={({ item }) => (
+                      <View style={styles.row}>
+                        <Image
+                          style={styles.images}
+                          source={{ uri: `http://localhost:4000/${item.pictureUrl}` }}
+                        />
+                        <View style={styles.right}>
+                          <Text style={styles.name}>{item.name}</Text>
+                          <Text style={styles.price}>{`$${item.price}`}</Text>
+                          {userId === item.seller.id && (
+                            <View style={styles.editSection}>
+                              <Button title="Edit" onPress={() => {}} />
+                              <Button
+                                title="Delete"
+                                onPress={() => {
+                                  deleteProduct({
+                                    variables: { id: item.id },
+                                    update: (store) => {
+                                      const data = store.readQuery({ query: productsQuery });
+                                      data.products = data.products.filter(x => x.id !== item.id);
+                                      store.writeQuery({ query: productsQuery, data });
+                                    },
+                                  });
+                                }}
+                              />
+                            </View>
+                          )}
                         </View>
-                      )}
-                    </View>
-                  </View>
-                )}
-              />
-            </View>
-          );
-        }}
-      </Query>
+                      </View>
+                    )}
+                  />
+                </View>
+              );
+            }}
+          </Query>
+        )}
+      </Mutation>
     );
   }
 }
