@@ -106,7 +106,14 @@ export default class Products extends React.Component {
                           <Text style={styles.price}>{`$${item.price}`}</Text>
                           {item.showButtons && (
                             <View style={styles.editSection}>
-                              <Button title="Edit" onPress={() => {}} />
+                              <Button
+                                title="Edit"
+                                onPress={() => history.push({
+                                  pathname: '/edit-product',
+                                  state: item,
+                                })
+                                }
+                              />
                               <Button
                                 title="Delete"
                                 onPress={() => {
