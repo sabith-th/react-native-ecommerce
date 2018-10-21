@@ -3,7 +3,14 @@ import jwtDecode from 'jwt-decode';
 import React from 'react';
 import { Mutation, Query } from 'react-apollo';
 import {
-  AsyncStorage, Button, FlatList, Image, StyleSheet, Text, View,
+  AsyncStorage,
+  Button,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 import { TOKEN_KEY } from '../constants';
 
@@ -12,13 +19,14 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   images: {
-    height: 100,
-    width: 100,
+    height: 125,
+    width: 125,
   },
   row: {
     display: 'flex',
     flexDirection: 'row',
     margin: 10,
+    justifyContent: 'center',
   },
   right: {
     flex: 1,
@@ -39,11 +47,18 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
   },
+  sortButton: {
+    flex: 1,
+  },
+  searchBar: {
+    padding: 10,
+    margin: 10,
+  },
 });
 
 export const productsQuery = gql`
-  query {
-    products {
+  query($orderBy: ProductOrderByInput, $where: ProductWhereInput) {
+    products(orderBy: $orderBy, where: $where) {
       id
       name
       price
@@ -66,6 +81,7 @@ export const deleteProductMutation = gql`
 export default class Products extends React.Component {
   state = {
     userId: null,
+    query: '',
   };
 
   componentDidMount = async () => {
@@ -78,16 +94,53 @@ export default class Products extends React.Component {
 
   render() {
     const { history } = this.props;
-    const { userId } = this.state;
+    const { userId, query } = this.state;
     return (
       <Mutation mutation={deleteProductMutation}>
         {deleteProduct => (
           <Query query={productsQuery}>
-            {({ loading, error, data: { products } }) => {
+            {({
+              loading, error, data: { products }, refetch, variables,
+            }) => {
               if (loading) return 'Loading...';
               if (error) return `Error! ${error.message}`;
               return (
                 <View style={styles.container}>
+                  <View>
+                    <View style={styles.searchBar}>
+                      <TextInput
+                        name="Search"
+                        placeholder="Search"
+                        value={query}
+                        onChangeText={(text) => {
+                          this.setState({ query: text });
+                          refetch({
+                            where: {
+                              name_contains: text,
+                            },
+                          });
+                        }}
+                      />
+                    </View>
+                    <View style={styles.row}>
+                      <Button
+                        title="Name"
+                        style={styles.sortButton}
+                        onPress={() => refetch({
+                          orderBy: variables.orderBy === 'name_ASC' ? 'name_DESC' : 'name_ASC',
+                        })
+                        }
+                      />
+                      <Button
+                        title="Price"
+                        style={styles.sortButton}
+                        onPress={() => refetch({
+                          orderBy: variables.orderBy === 'price_ASC' ? 'price_DESC' : 'price_ASC',
+                        })
+                        }
+                      />
+                    </View>
+                  </View>
                   <Button title="Create new product" onPress={() => history.push('/new-product')} />
                   <FlatList
                     keyExtractor={item => item.id}
