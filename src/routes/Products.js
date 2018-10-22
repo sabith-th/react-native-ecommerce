@@ -109,11 +109,11 @@ export default class Products extends React.Component {
     return (
       <Mutation mutation={deleteProductMutation}>
         {deleteProduct => (
-          <Query query={productsQuery} variables={{ orderBy: 'createdAt_ASC' }}>
+          <Query query={productsQuery} variables={{ orderBy: 'createdAt_ASC' }} partialRefetch>
             {({
               loading, error, data: { productsConnection }, refetch, variables, fetchMore,
             }) => {
-              if (loading && !productsConnection) return 'Loading...';
+              if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
               if (error) return `Error! ${error.message}`;
               const products = productsConnection.edges;
               const { hasNextPage } = productsConnection.pageInfo;
@@ -141,6 +141,7 @@ export default class Products extends React.Component {
                         style={styles.sortButton}
                         onPress={() => refetch({
                           orderBy: variables.orderBy === 'name_ASC' ? 'name_DESC' : 'name_ASC',
+                          after: null,
                         })
                         }
                       />
@@ -149,18 +150,22 @@ export default class Products extends React.Component {
                         style={styles.sortButton}
                         onPress={() => refetch({
                           orderBy: variables.orderBy === 'price_ASC' ? 'price_DESC' : 'price_ASC',
+                          after: null,
                         })
                         }
                       />
                     </View>
                   </View>
-                  <Button title="Create new product" onPress={() => history.push('/new-product')} />
+                  <Button
+                    title="Create new product"
+                    onPress={() => history.push({ pathname: '/new-product', state: variables })}
+                  />
                   <FlatList
                     keyExtractor={item => item.id}
                     ListFooterComponent={() => hasNextPage && <ActivityIndicator size="large" color="#0000ff" />
                     }
                     onEndReached={() => {
-                      if (this.calledOnce && hasNextPage) {
+                      if (!loading && hasNextPage) {
                         fetchMore({
                           variables: {
                             after: productsConnection.pageInfo.endCursor,
@@ -179,8 +184,6 @@ export default class Products extends React.Component {
                             };
                           },
                         });
-                      } else {
-                        this.calledOnce = true;
                       }
                     }}
                     onEndReachedThreshold={0}
@@ -203,7 +206,10 @@ export default class Products extends React.Component {
                                 title="Edit"
                                 onPress={() => history.push({
                                   pathname: '/edit-product',
-                                  state: item,
+                                  state: {
+                                    item,
+                                    variables,
+                                  },
                                 })
                                 }
                               />
@@ -213,9 +219,15 @@ export default class Products extends React.Component {
                                   deleteProduct({
                                     variables: { id: item.id },
                                     update: (store) => {
-                                      const data = store.readQuery({ query: productsQuery });
-                                      data.products = data.products.filter(x => x.id !== item.id);
-                                      store.writeQuery({ query: productsQuery, data });
+                                      const data = store.readQuery({
+                                        query: productsQuery,
+                                        variables,
+                                      });
+                                      const edges = data.productsConnection.edges.filter(
+                                        x => x.node.id !== item.id,
+                                      );
+                                      data.productsConnection.edges = edges;
+                                      store.writeQuery({ query: productsQuery, data, variables });
                                     },
                                   });
                                 }}

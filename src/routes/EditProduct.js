@@ -24,10 +24,12 @@ export default class EditProduct extends React.Component {
     const { pictureUrl, name, price } = values;
     const {
       history,
-      location: { state },
+      location: {
+        state: { item, variables },
+      },
     } = this.props;
     let picture = null;
-    if (state.pictureUrl !== pictureUrl) {
+    if (item.pictureUrl !== pictureUrl) {
       picture = new ReactNativeFile({
         uri: pictureUrl,
         name: 'a.jpg',
@@ -37,15 +39,19 @@ export default class EditProduct extends React.Component {
     try {
       await mutate({
         variables: {
-          id: state.id,
+          id: item.id,
           name,
           price: parseFloat(price),
           picture,
         },
         update: (store, { data: { updateProduct } }) => {
-          const data = store.readQuery({ query: productsQuery });
-          data.products = data.products.map(p => (p.id === updateProduct.id ? updateProduct : p));
-          store.writeQuery({ query: productsQuery, data });
+          const data = store.readQuery({ query: productsQuery, variables });
+          data.productsConnection.edges = data.productsConnection.edges.map(
+            p => (p.node.id === updateProduct.id
+              ? { __typename: 'Node', cursor: updateProduct.id, node: updateProduct }
+              : p),
+          );
+          store.writeQuery({ query: productsQuery, data, variables });
         },
       });
     } catch (e) {
@@ -58,16 +64,18 @@ export default class EditProduct extends React.Component {
 
   render() {
     const {
-      location: { state },
+      location: {
+        state: { item },
+      },
     } = this.props;
     return (
       <Mutation mutation={updateProductMutation}>
         {mutate => (
           <Form
             initialValues={{
-              ...state,
-              pictureUrl: `http://localhost:4000/${state.pictureUrl}`,
-              price: `${state.price}`,
+              ...item,
+              pictureUrl: `http://localhost:4000/${item.pictureUrl}`,
+              price: `${item.price}`,
             }}
             submit={this.onSubmit}
             mutate={mutate}

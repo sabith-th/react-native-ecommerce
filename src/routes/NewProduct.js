@@ -22,7 +22,10 @@ const createProductMutation = gql`
 export default class NewProduct extends React.Component {
   onSubmit = async (mutate, values) => {
     const { pictureUrl, name, price } = values;
-    const { history } = this.props;
+    const {
+      history,
+      location: { state: variables },
+    } = this.props;
     const picture = new ReactNativeFile({
       uri: pictureUrl,
       name: 'a.jpg',
@@ -37,9 +40,12 @@ export default class NewProduct extends React.Component {
           picture,
         },
         update: (store, { data: { createProduct } }) => {
-          const data = store.readQuery({ query: productsQuery });
-          data.products.push(createProduct);
-          store.writeQuery({ query: productsQuery, data });
+          const data = store.readQuery({ query: productsQuery, variables });
+          data.productsConnection.edges = [
+            ...data.productsConnection.edges,
+            { __typename: 'Node', cursor: createProduct.id, node: createProduct },
+          ];
+          store.writeQuery({ query: productsQuery, data, variables });
         },
       });
     } catch (e) {
