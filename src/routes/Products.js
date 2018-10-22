@@ -3,6 +3,7 @@ import jwtDecode from 'jwt-decode';
 import React from 'react';
 import { Mutation, Query } from 'react-apollo';
 import {
+  ActivityIndicator,
   AsyncStorage,
   Button,
   FlatList,
@@ -17,6 +18,8 @@ import { TOKEN_KEY } from '../constants';
 const styles = StyleSheet.create({
   container: {
     marginTop: 30,
+    display: 'flex',
+    flex: 1,
   },
   images: {
     height: 125,
@@ -57,14 +60,22 @@ const styles = StyleSheet.create({
 });
 
 export const productsQuery = gql`
-  query($orderBy: ProductOrderByInput, $where: ProductWhereInput) {
-    products(orderBy: $orderBy, where: $where) {
-      id
-      name
-      price
-      pictureUrl
-      seller {
-        id
+  query($orderBy: ProductOrderByInput, $where: ProductWhereInput, $after: String) {
+    productsConnection(first: 5, where: $where, orderBy: $orderBy, after: $after) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        node {
+          id
+          name
+          price
+          pictureUrl
+          seller {
+            id
+          }
+        }
       }
     }
   }
@@ -98,12 +109,14 @@ export default class Products extends React.Component {
     return (
       <Mutation mutation={deleteProductMutation}>
         {deleteProduct => (
-          <Query query={productsQuery}>
+          <Query query={productsQuery} variables={{ orderBy: 'createdAt_ASC' }}>
             {({
-              loading, error, data: { products }, refetch, variables,
+              loading, error, data: { productsConnection }, refetch, variables, fetchMore,
             }) => {
-              if (loading) return 'Loading...';
+              if (loading && !productsConnection) return 'Loading...';
               if (error) return `Error! ${error.message}`;
+              const products = productsConnection.edges;
+              const { hasNextPage } = productsConnection.pageInfo;
               return (
                 <View style={styles.container}>
                   <View>
@@ -144,9 +157,36 @@ export default class Products extends React.Component {
                   <Button title="Create new product" onPress={() => history.push('/new-product')} />
                   <FlatList
                     keyExtractor={item => item.id}
+                    ListFooterComponent={() => hasNextPage && <ActivityIndicator size="large" color="#0000ff" />
+                    }
+                    onEndReached={() => {
+                      if (this.calledOnce && hasNextPage) {
+                        fetchMore({
+                          variables: {
+                            after: productsConnection.pageInfo.endCursor,
+                          },
+                          updateQuery: (prev, { fetchMoreResult }) => {
+                            if (!fetchMoreResult) return prev;
+                            return {
+                              productsConnection: {
+                                __typename: 'ProductConnection',
+                                pageInfo: fetchMoreResult.productsConnection.pageInfo,
+                                edges: [
+                                  ...prev.productsConnection.edges,
+                                  ...fetchMoreResult.productsConnection.edges,
+                                ],
+                              },
+                            };
+                          },
+                        });
+                      } else {
+                        this.calledOnce = true;
+                      }
+                    }}
+                    onEndReachedThreshold={0}
                     data={products.map(p => ({
-                      ...p,
-                      showButtons: userId === p.seller.id,
+                      ...p.node,
+                      showButtons: userId === p.node.seller.id,
                     }))}
                     renderItem={({ item }) => (
                       <View style={styles.row}>
